@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { api } from "@/lib/api";
+import { CategoryCount, SiteSetting } from "@/types";
 import { Search, Rss, ChevronDown, LogOut, LayoutDashboard, LogIn, Menu, X } from "lucide-react";
 
 export default function Navbar() {
@@ -11,7 +13,15 @@ export default function Navbar() {
   const [token, setToken] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [categories, setCategories] = useState<CategoryCount[]>([]);
+  const [settings, setSettings] = useState<SiteSetting>({
+    site_title: "The Castle Chronicle",
+    tagline: "REFLECTIONS ON FAMILY, FAITH, CULTURE & HISTORY",
+    author_name: "James Castle",
+    author_title: "Essayist, Father & Historian",
+    author_bio: "Chronicling ordinary days, historic curiosities, and the enduring truths that anchor our households in an accelerating world.",
+    author_image: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&auto=format&fit=crop&q=80",
+  });
 
   useEffect(() => {
     const checkAuth = () => {
@@ -20,6 +30,16 @@ export default function Navbar() {
     };
     checkAuth();
     window.addEventListener("storage", checkAuth);
+
+    // Fetch dynamic settings & categories
+    api.get("/settings").then((res) => {
+      if (res.data.data) setSettings(res.data.data);
+    }).catch(() => {});
+
+    api.get("/categories").then((res) => {
+      if (res.data.data) setCategories(res.data.data);
+    }).catch(() => {});
+
     return () => window.removeEventListener("storage", checkAuth);
   }, [pathname]);
 
@@ -39,19 +59,21 @@ export default function Navbar() {
     { name: "Contact", href: "/about#contact" },
   ];
 
-  const categoryList = ["Family", "Faith", "Culture", "History", "Commentary", "Humor"];
+  const categoryList = categories.length > 0 
+    ? categories.map(c => c.category)
+    : ["Family", "Faith", "Culture", "History", "Commentary", "Humor"];
 
   return (
-    <header className="border-b border-neutral-200 pb-6 mb-8">
-      {/* 1. Centered Newspaper Masthead */}
+    <header className="border-b border-neutral-200 pb-6 mb-8 font-serif">
+      {/* 1. Centered Dynamic Newspaper Masthead */}
       <div className="text-center py-4 sm:py-6">
         <Link href="/" className="inline-block group">
           <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-serif font-bold tracking-tight text-[#162f4d] group-hover:opacity-90 transition-opacity">
-            The Castle Chronicle
+            {settings.site_title || "The Castle Chronicle"}
           </h1>
         </Link>
-        <p className="mt-2 text-[11px] sm:text-xs font-semibold tracking-[0.25em] text-[#64748b] uppercase">
-          REFLECTIONS ON FAMILY, FAITH, CULTURE & HISTORY
+        <p className="mt-2 text-[11px] sm:text-xs font-semibold tracking-[0.25em] text-[#64748b] uppercase font-sans">
+          {settings.tagline || "REFLECTIONS ON FAMILY, FAITH, CULTURE & HISTORY"}
         </p>
       </div>
 
@@ -75,8 +97,8 @@ export default function Navbar() {
                       <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
                     </Link>
 
-                    {/* Dropdown Menu */}
-                    <div className="absolute left-0 top-full hidden group-hover:block bg-white border border-neutral-200 shadow-md py-1.5 w-40 z-50 text-xs font-serif">
+                    {/* Dynamic Categories Dropdown Menu */}
+                    <div className="absolute left-0 top-full hidden group-hover:block bg-white border border-neutral-200 shadow-md py-1.5 w-44 z-50 text-xs font-serif">
                       {categoryList.map((cat) => (
                         <Link
                           key={cat}
@@ -127,7 +149,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="text-xs font-semibold text-[#334155] hover:text-black hidden sm:flex items-center space-x-1"
+                className="text-xs font-semibold text-[#334155] hover:text-black hidden sm:flex items-center space-x-1 font-sans"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Admin</span>
@@ -141,11 +163,9 @@ export default function Navbar() {
             </Link>
 
             <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                alert("Subscribed to The Castle Chronicle RSS Feed!");
-              }}
+              href="http://localhost:8080/rss"
+              target="_blank"
+              rel="noreferrer"
               title="Subscribe via RSS"
               className="hover:text-black transition p-1"
             >

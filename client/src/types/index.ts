@@ -45,3 +45,12 @@ export interface User {
   email: string;
   role: string;
 }
+
+export interface SiteSetting {
+  site_title: string;
+  tagline: string;
+  author_name: string;
+  author_title: string;
+  author_bio: string;
+  author_image: string;
+}

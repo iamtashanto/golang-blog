@@ -22,6 +22,7 @@ func main() {
 		&models.Comment{},
 		&models.Subscriber{},
 		&models.ContactMessage{},
+		&models.SiteSetting{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to auto-migrate: %v", err)
@@ -49,6 +50,9 @@ func main() {
 	// RSS 2.0 Feed
 	r.GET("/rss", controllers.GenerateRSSFeed)
 	r.GET("/feed.xml", controllers.GenerateRSSFeed)
+
+	// Publication Settings (Dynamic)
+	r.GET("/settings", controllers.GetSettings)
 
 	// Auth routes
 	r.POST("/auth/register", controllers.Register)
@@ -80,6 +84,7 @@ func main() {
 		adminRoutes.GET("/admin/stats", controllers.GetStats)
 		adminRoutes.GET("/admin/subscribers", controllers.GetSubscribers)
 		adminRoutes.GET("/admin/messages", controllers.GetContactMessages)
+		adminRoutes.PUT("/admin/settings", controllers.UpdateSettings)
 	}
 
 	// Start the server

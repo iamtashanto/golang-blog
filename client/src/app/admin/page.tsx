@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Post, Comment, BlogStats } from "@/types";
+import { Post, Comment, BlogStats, SiteSetting } from "@/types";
 import { api } from "@/lib/api";
 import {
   LayoutDashboard,
@@ -30,12 +30,11 @@ import {
   Italic,
   Heading,
   Quote,
-  Code,
-  List,
   Copy,
   Check,
   Globe,
-  Clock
+  Clock,
+  Settings
 } from "lucide-react";
 import Link from "next/link";
 
@@ -58,7 +57,7 @@ export default function ProfessionalAdminDashboard() {
   const router = useRouter();
 
   // Navigation tabs
-  const [currentTab, setCurrentTab] = useState<"overview" | "posts" | "editor" | "comments" | "messages" | "subscribers">("overview");
+  const [currentTab, setCurrentTab] = useState<"overview" | "posts" | "editor" | "comments" | "messages" | "subscribers" | "settings">("overview");
 
   // Data states
   const [posts, setPosts] = useState<Post[]>([]);
@@ -66,6 +65,14 @@ export default function ProfessionalAdminDashboard() {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [stats, setStats] = useState<BlogStats | null>(null);
+  const [settings, setSettings] = useState<SiteSetting>({
+    site_title: "The Castle Chronicle",
+    tagline: "REFLECTIONS ON FAMILY, FAITH, CULTURE & HISTORY",
+    author_name: "James Castle",
+    author_title: "Essayist, Father & Historian",
+    author_bio: "Chronicling ordinary days, historic curiosities, and the enduring truths that anchor our households in an accelerating world.",
+    author_image: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&auto=format&fit=crop&q=80",
+  });
   const [loading, setLoading] = useState(true);
 
   // Filters & Search
@@ -82,6 +89,10 @@ export default function ProfessionalAdminDashboard() {
   const [published, setPublished] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Settings form states
+  const [settingsForm, setSettingsForm] = useState<SiteSetting>(settings);
+  const [savingSettings, setSavingSettings] = useState(false);
 
   // Notifications Toast
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -107,12 +118,13 @@ export default function ProfessionalAdminDashboard() {
   const loadDashboard = async () => {
     setLoading(true);
     try {
-      const [postsRes, statsRes, commentsRes, msgsRes, subsRes] = await Promise.all([
+      const [postsRes, statsRes, commentsRes, msgsRes, subsRes, setRes] = await Promise.all([
         api.get("/posts?all=true"),
         api.get("/admin/stats"),
         api.get("/admin/comments").catch(() => ({ data: { data: [] } })),
         api.get("/admin/messages").catch(() => ({ data: { data: [] } })),
         api.get("/admin/subscribers").catch(() => ({ data: { data: [] } })),
+        api.get("/settings").catch(() => ({ data: { data: null } })),
       ]);
 
       setPosts(postsRes.data.data || []);
@@ -120,6 +132,10 @@ export default function ProfessionalAdminDashboard() {
       setComments(commentsRes.data?.data || []);
       setMessages(msgsRes.data?.data || []);
       setSubscribers(subsRes.data?.data || []);
+      if (setRes.data?.data) {
+        setSettings(setRes.data.data);
+        setSettingsForm(setRes.data.data);
+      }
     } catch (err: any) {
       if (err.response?.status === 401 || err.response?.status === 403) {
         localStorage.removeItem("token");
@@ -197,6 +213,20 @@ export default function ProfessionalAdminDashboard() {
     }
   };
 
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      const res = await api.put("/admin/settings", settingsForm);
+      setSettings(res.data.data);
+      showToast("success", "Publication settings saved successfully.");
+    } catch (err: any) {
+      showToast("error", err.response?.data?.error || "Failed to update settings.");
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   const handleDeletePost = async (id: number) => {
     if (!confirm("Are you sure you want to permanently delete this essay?")) return;
 
@@ -229,7 +259,6 @@ export default function ProfessionalAdminDashboard() {
     setTimeout(() => setCopiedEmails(false), 3000);
   };
 
-  // Editor markdown helpers
   const insertMarkdown = (prefix: string, suffix: string = "") => {
     setContent((prev) => prev + prefix + " " + suffix);
   };
@@ -275,11 +304,11 @@ export default function ProfessionalAdminDashboard() {
           <div className="flex items-center justify-between pb-4 border-b border-slate-800">
             <Link href="/" className="flex items-center space-x-2.5 group">
               <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-serif font-bold text-lg shadow-md shadow-indigo-500/20">
-                C
+                {settings.site_title.charAt(0) || "C"}
               </div>
               <div>
-                <h2 className="text-sm font-serif font-bold text-white tracking-tight">
-                  Castle Chronicle
+                <h2 className="text-sm font-serif font-bold text-white tracking-tight truncate max-w-[140px]">
+                  {settings.site_title}
                 </h2>
                 <span className="text-[10px] text-slate-400 uppercase tracking-widest block font-sans">
                   Editorial Studio
@@ -400,6 +429,20 @@ export default function ProfessionalAdminDashboard() {
                 {subscribers.length}
               </span>
             </button>
+
+            <button
+              onClick={() => setCurrentTab("settings")}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors ${
+                currentTab === "settings"
+                  ? "bg-slate-800 text-white font-semibold"
+                  : "hover:bg-slate-800/60 hover:text-white text-slate-400"
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <Settings className="w-4 h-4 text-cyan-400" />
+                <span>Publication Settings</span>
+              </div>
+            </button>
           </nav>
         </div>
 
@@ -408,10 +451,10 @@ export default function ProfessionalAdminDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2.5">
               <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-xs text-white uppercase">
-                JC
+                {settings.author_name ? settings.author_name.charAt(0) : "A"}
               </div>
               <div>
-                <span className="text-xs font-semibold text-white block">James Castle</span>
+                <span className="text-xs font-semibold text-white block">{settings.author_name}</span>
                 <span className="text-[10px] text-emerald-400 font-medium">Administrator</span>
               </div>
             </div>
@@ -437,9 +480,9 @@ export default function ProfessionalAdminDashboard() {
         </div>
       </aside>
 
-      {/* MAIN ADMIN WORKSPACE AREA */}
+      {/* MAIN WORKSPACE */}
       <main className="flex-1 p-6 sm:p-8 lg:p-10 max-w-7xl overflow-y-auto space-y-8">
-        {/* Top Header Bar */}
+        {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
@@ -449,24 +492,24 @@ export default function ProfessionalAdminDashboard() {
               {currentTab === "comments" && "Reader Discussions & Responses"}
               {currentTab === "messages" && "Editorial Letters & Inquiries"}
               {currentTab === "subscribers" && "Dispatch Subscriber Roster"}
+              {currentTab === "settings" && "Publication & Profile Settings"}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              The Castle Chronicle content management engine & PostgreSQL database.
+              Live connected to Go Gin + GORM PostgreSQL backend.
             </p>
           </div>
 
           <div className="flex items-center space-x-3 text-xs">
             <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md font-semibold flex items-center space-x-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>PostgreSQL Live</span>
+              <span>PostgreSQL Active</span>
             </span>
           </div>
         </div>
 
-        {/* TAB 1: EXECUTIVE DASHBOARD OVERVIEW */}
+        {/* TAB 1: OVERVIEW */}
         {currentTab === "overview" && (
           <div className="space-y-8">
-            {/* 4 Metric Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2">
                 <div className="flex items-center justify-between text-slate-500">
@@ -493,7 +536,7 @@ export default function ProfessionalAdminDashboard() {
                 <div className="text-3xl font-black text-slate-900">{stats?.total_views || 0}</div>
                 <div className="text-[11px] text-indigo-600 font-semibold flex items-center space-x-1">
                   <TrendingUp className="w-3.5 h-3.5" />
-                  <span>Real-time traffic</span>
+                  <span>Real-time tracking</span>
                 </div>
               </div>
 
@@ -520,9 +563,7 @@ export default function ProfessionalAdminDashboard() {
               </div>
             </div>
 
-            {/* Two Column Summary Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              {/* Left Column: Recent Articles (8 cols) */}
               <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <h3 className="text-base font-bold text-slate-900">Recent Publications</h3>
@@ -578,9 +619,7 @@ export default function ProfessionalAdminDashboard() {
                 </div>
               </div>
 
-              {/* Right Column: Recent Activity (4 cols) */}
               <div className="lg:col-span-4 space-y-6">
-                {/* Recent Inquiries */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h3 className="text-sm font-bold text-slate-900">Recent Letters</h3>
@@ -611,7 +650,6 @@ export default function ProfessionalAdminDashboard() {
                   )}
                 </div>
 
-                {/* Recent Comments */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h3 className="text-sm font-bold text-slate-900">Latest Comments</h3>
@@ -646,7 +684,7 @@ export default function ProfessionalAdminDashboard() {
           </div>
         )}
 
-        {/* TAB 2: ARTICLES DATA TABLE */}
+        {/* TAB 2: POSTS */}
         {currentTab === "posts" && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -689,7 +727,6 @@ export default function ProfessionalAdminDashboard() {
               </div>
             </div>
 
-            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
@@ -785,7 +822,7 @@ export default function ProfessionalAdminDashboard() {
           </div>
         )}
 
-        {/* TAB 3: ARTICLE WRITER & MARKDOWN EDITOR */}
+        {/* TAB 3: WRITER & MARKDOWN EDITOR */}
         {currentTab === "editor" && (
           <form onSubmit={handleSavePost} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-200 pb-4">
@@ -824,7 +861,6 @@ export default function ProfessionalAdminDashboard() {
             </div>
 
             {showPreview ? (
-              /* Live Preview Mode */
               <div className="p-6 border border-slate-200 rounded-xl bg-slate-50 space-y-4 font-serif">
                 <div className="text-xs uppercase font-sans font-bold text-slate-400">
                   PREVIEW: {category} • {new Date().toLocaleDateString()}
@@ -842,7 +878,6 @@ export default function ProfessionalAdminDashboard() {
                 </div>
               </div>
             ) : (
-              /* Editor Form */
               <div className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="sm:col-span-2 space-y-1.5">
@@ -878,7 +913,6 @@ export default function ProfessionalAdminDashboard() {
                   </div>
                 </div>
 
-                {/* Cover Image URL */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Cover Illustration / Photography URL (Optional)
@@ -901,7 +935,6 @@ export default function ProfessionalAdminDashboard() {
                   )}
                 </div>
 
-                {/* Opening Excerpt */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Short Abstract / Excerpt
@@ -915,14 +948,12 @@ export default function ProfessionalAdminDashboard() {
                   ></textarea>
                 </div>
 
-                {/* Content with Toolbar */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Manuscript Body *
                     </label>
 
-                    {/* Quick Markdown Toolbar */}
                     <div className="flex items-center space-x-1 text-slate-500">
                       <button
                         type="button"
@@ -969,7 +1000,6 @@ export default function ProfessionalAdminDashboard() {
                   ></textarea>
                 </div>
 
-                {/* Footer Controls */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-200">
                   <label className="flex items-center space-x-2.5 cursor-pointer text-xs font-semibold text-slate-700">
                     <input
@@ -1004,7 +1034,7 @@ export default function ProfessionalAdminDashboard() {
           </form>
         )}
 
-        {/* TAB 4: COMMENTS MODERATION */}
+        {/* TAB 4: COMMENTS */}
         {currentTab === "comments" && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -1052,7 +1082,7 @@ export default function ProfessionalAdminDashboard() {
           </div>
         )}
 
-        {/* TAB 5: INBOX & LETTERS */}
+        {/* TAB 5: MESSAGES */}
         {currentTab === "messages" && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -1100,7 +1130,7 @@ export default function ProfessionalAdminDashboard() {
           </div>
         )}
 
-        {/* TAB 6: DISPATCH SUBSCRIBERS */}
+        {/* TAB 6: SUBSCRIBERS */}
         {currentTab === "subscribers" && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
@@ -1143,6 +1173,115 @@ export default function ProfessionalAdminDashboard() {
               )}
             </div>
           </div>
+        )}
+
+        {/* TAB 7: PUBLICATION SETTINGS (DYNAMIC CONFIG) */}
+        {currentTab === "settings" && (
+          <form onSubmit={handleSaveSettings} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+            <div className="border-b border-slate-200 pb-4">
+              <h3 className="text-lg font-bold text-slate-900">
+                Publication & Masthead Settings
+              </h3>
+              <p className="text-xs text-slate-500">
+                Customize the blog title, tagline, author portrait, and biography displayed across the website.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-700 uppercase tracking-wider text-[10px]">
+                  Publication Title
+                </label>
+                <input
+                  type="text"
+                  value={settingsForm.site_title}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, site_title: e.target.value })}
+                  required
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-serif font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-700 uppercase tracking-wider text-[10px]">
+                  Masthead Tagline
+                </label>
+                <input
+                  type="text"
+                  value={settingsForm.tagline}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, tagline: e.target.value })}
+                  required
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-700 uppercase tracking-wider text-[10px]">
+                  Author / Editor Name
+                </label>
+                <input
+                  type="text"
+                  value={settingsForm.author_name}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, author_name: e.target.value })}
+                  required
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-700 uppercase tracking-wider text-[10px]">
+                  Author Title / Role
+                </label>
+                <input
+                  type="text"
+                  value={settingsForm.author_title}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, author_title: e.target.value })}
+                  required
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5 text-xs">
+              <label className="block font-bold text-slate-700 uppercase tracking-wider text-[10px]">
+                Author Portrait / Illustration Image URL
+              </label>
+              <input
+                type="url"
+                value={settingsForm.author_image}
+                onChange={(e) => setSettingsForm({ ...settingsForm, author_image: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+              />
+              {settingsForm.author_image && (
+                <div className="mt-2 w-20 h-20 rounded-md overflow-hidden border border-slate-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={settingsForm.author_image} alt="Author Preview" className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1.5 text-xs">
+              <label className="block font-bold text-slate-700 uppercase tracking-wider text-[10px]">
+                Author Bio Summary (Shown in Sidebar)
+              </label>
+              <textarea
+                rows={3}
+                value={settingsForm.author_bio}
+                onChange={(e) => setSettingsForm({ ...settingsForm, author_bio: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+              ></textarea>
+            </div>
+
+            <div className="pt-4 border-t border-slate-200 flex justify-end">
+              <button
+                type="submit"
+                disabled={savingSettings}
+                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition flex items-center space-x-2 shadow-sm disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                <span>{savingSettings ? "Saving Settings..." : "Save Publication Settings"}</span>
+              </button>
+            </div>
+          </form>
         )}
       </main>
     </div>

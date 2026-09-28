@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CategoryCount } from "@/types";
+import { CategoryCount, Post, SiteSetting } from "@/types";
 import { api } from "@/lib/api";
-import { Search, Rss, Square, History, Calendar, Check, AlertCircle } from "lucide-react";
+import { Search, Rss, Square, History, Calendar } from "lucide-react";
 
 interface SidebarProps {
   categories: CategoryCount[];
+  posts?: Post[];
+  settings?: SiteSetting | null;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onSearchSubmit?: () => void;
@@ -15,6 +17,8 @@ interface SidebarProps {
 
 export default function Sidebar({
   categories,
+  posts = [],
+  settings,
   searchQuery,
   setSearchQuery,
   onSearchSubmit,
@@ -42,6 +46,12 @@ export default function Sidebar({
     }
   };
 
+  const authorName = settings?.author_name || "James Castle";
+  const authorTitle = settings?.author_title || "Essayist, Father & Historian";
+  const authorBio = settings?.author_bio || "Chronicling ordinary days, historic curiosities, and the enduring truths that anchor our households in an accelerating world.";
+  const authorImage = settings?.author_image || "https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&auto=format&fit=crop&q=80";
+
+  // Dynamic Categories fallback
   const displayCategories = categories.length > 0 ? categories : [
     { category: "Family", count: 42 },
     { category: "Faith", count: 89 },
@@ -50,6 +60,46 @@ export default function Sidebar({
     { category: "Commentary", count: 28 },
     { category: "Humor", count: 19 },
   ];
+
+  // Dynamic History / Notable Posts from actual database posts
+  const historyPosts = posts.length > 2 ? posts.slice(1, 4) : [
+    {
+      ID: 3,
+      CreatedAt: "2026-07-18T15:00:00Z",
+      title: "What the Town Clerk's Ledger of 1884 Forgot to Mention",
+      summary: "Between the property tax disputes and cattle brand registrations sits a tiny penciled margin note...",
+    },
+    {
+      ID: 4,
+      CreatedAt: "2026-07-11T16:00:00Z",
+      title: "The Quiet Dignity of Slow Machinery",
+      summary: "Why our obsession with frictionless velocity is robbing small towns of craft, conversation...",
+    },
+    {
+      ID: 5,
+      CreatedAt: "2026-07-04T18:00:00Z",
+      title: "Porch Lanterns and Fireflies: Small Town Independence Day",
+      summary: "Before the synchronized drone spectacles, there was the single brass trumpet playing taps...",
+    },
+  ];
+
+  // Dynamic Archives grouped by year
+  const archiveYearsMap: Record<string, number> = {};
+  posts.forEach((p) => {
+    const yr = new Date(p.CreatedAt).getFullYear().toString();
+    archiveYearsMap[yr] = (archiveYearsMap[yr] || 0) + 1;
+  });
+
+  const archiveEntries = Object.keys(archiveYearsMap).length > 0
+    ? Object.keys(archiveYearsMap).sort((a, b) => parseInt(b) - parseInt(a)).map(yr => ({ year: yr, count: archiveYearsMap[yr] }))
+    : [
+        { year: "2026", count: 31 },
+        { year: "2025", count: 64 },
+        { year: "2024", count: 58 },
+        { year: "2023", count: 72 },
+        { year: "2022", count: 69 },
+        { year: "2021", count: 54 },
+      ];
 
   return (
     <aside className="space-y-8 font-serif">
@@ -73,29 +123,29 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* 2. JAMES CASTLE AUTHOR PROFILE BOX */}
+      {/* 2. DYNAMIC AUTHOR PROFILE BOX */}
       <div className="bg-[#f0f4f8] border border-[#e2e8f0] p-6 text-center space-y-3.5 rounded-sm">
         {/* Engraving Artwork Portrait */}
         <div className="w-24 h-24 mx-auto border border-[#cbd5e1] bg-white p-1 shadow-sm overflow-hidden rounded-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&auto=format&fit=crop&q=80"
-            alt="James Castle engraving portrait"
+            src={authorImage}
+            alt={`${authorName} portrait`}
             className="w-full h-full object-cover grayscale contrast-125"
           />
         </div>
 
         <div className="space-y-0.5">
           <h3 className="font-serif text-lg font-bold text-[#162f4d]">
-            James Castle
+            {authorName}
           </h3>
           <p className="text-[11px] italic text-[#64748b] font-serif">
-            Essayist, Father & Historian
+            {authorTitle}
           </p>
         </div>
 
         <p className="text-xs text-[#334155] leading-relaxed font-serif px-1">
-          Chronicling ordinary days, historic curiosities, and the enduring truths that anchor our households in an accelerating world.
+          {authorBio}
         </p>
 
         {subMsg && (
@@ -129,7 +179,7 @@ export default function Sidebar({
               className="w-full py-2 px-4 bg-[#162f4d] hover:bg-[#0f233a] text-white text-[11px] font-sans font-semibold tracking-wider transition flex items-center justify-center space-x-2 rounded-sm shadow-sm"
             >
               <Rss className="w-3.5 h-3.5" />
-              <span>Subscribe via RSS / Email</span>
+              <span>Subscribe via RSS / Dispatch</span>
             </button>
             <a
               href="http://localhost:8080/rss"
@@ -143,7 +193,7 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* 3. CATEGORIES WIDGET */}
+      {/* 3. DYNAMIC CATEGORIES WIDGET */}
       <div className="space-y-3">
         <div className="flex items-center justify-between border-b border-neutral-200 pb-1.5">
           <h4 className="text-[11px] font-bold tracking-[0.2em] text-[#475569] uppercase font-sans">
@@ -168,7 +218,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* 4. THIS DAY IN HISTORY */}
+      {/* 4. DYNAMIC THIS DAY IN HISTORY / ESSAYS */}
       <div className="space-y-3">
         <div className="flex items-center justify-between border-b border-neutral-200 pb-1.5">
           <h4 className="text-[11px] font-bold tracking-[0.2em] text-[#475569] uppercase font-sans">
@@ -182,45 +232,31 @@ export default function Sidebar({
         </p>
 
         <div className="space-y-2.5">
-          <Link href="/archive" className="block bg-[#f0f4f8] p-3 rounded border border-[#e2e8f0]/80 space-y-0.5 hover:border-[#cbd5e1] transition">
-            <span className="text-[10px] font-sans font-medium text-[#64748b]">
-              2008 • 18 years ago
-            </span>
-            <h5 className="text-xs font-serif font-bold text-[#162f4d] hover:underline">
-              Off to City Hall
-            </h5>
-            <p className="text-[11px] font-serif text-[#475569] line-clamp-1 italic">
-              Filing building permits for the carriage house...
-            </p>
-          </Link>
-
-          <Link href="/archive" className="block bg-[#f0f4f8] p-3 rounded border border-[#e2e8f0]/80 space-y-0.5 hover:border-[#cbd5e1] transition">
-            <span className="text-[10px] font-sans font-medium text-[#64748b]">
-              2012 • 14 years ago
-            </span>
-            <h5 className="text-xs font-serif font-bold text-[#162f4d] hover:underline">
-              Summer Storms and Screen Porches
-            </h5>
-            <p className="text-[11px] font-serif text-[#475569] line-clamp-1 italic">
-              Watching lightning dance across the western hill...
-            </p>
-          </Link>
-
-          <Link href="/archive" className="block bg-[#f0f4f8] p-3 rounded border border-[#e2e8f0]/80 space-y-0.5 hover:border-[#cbd5e1] transition">
-            <span className="text-[10px] font-sans font-medium text-[#64748b]">
-              2018 • 8 years ago
-            </span>
-            <h5 className="text-xs font-serif font-bold text-[#162f4d] hover:underline">
-              Reflections on the Old Cedar Tree
-            </h5>
-            <p className="text-[11px] font-serif text-[#475569] line-clamp-1 italic">
-              When thirty years of roots yield to a single sudd...
-            </p>
-          </Link>
+          {historyPosts.map((post, idx) => {
+            const yearsAgo = 18 - idx * 4;
+            const yearNum = 2026 - yearsAgo;
+            return (
+              <Link
+                key={post.ID}
+                href={`/posts/${post.ID}`}
+                className="block bg-[#f0f4f8] p-3 rounded border border-[#e2e8f0]/80 space-y-0.5 hover:border-[#cbd5e1] transition"
+              >
+                <span className="text-[10px] font-sans font-medium text-[#64748b]">
+                  {yearNum} • {yearsAgo} years ago
+                </span>
+                <h5 className="text-xs font-serif font-bold text-[#162f4d] hover:underline line-clamp-1">
+                  {post.title}
+                </h5>
+                <p className="text-[11px] font-serif text-[#475569] line-clamp-1 italic">
+                  {post.summary}
+                </p>
+              </Link>
+            );
+          })}
         </div>
       </div>
 
-      {/* 5. ARCHIVES TABLE WIDGET */}
+      {/* 5. DYNAMIC ARCHIVES TABLE WIDGET */}
       <div className="space-y-3">
         <div className="flex items-center justify-between border-b border-neutral-200 pb-1.5">
           <h4 className="text-[11px] font-bold tracking-[0.2em] text-[#475569] uppercase font-sans">
@@ -230,30 +266,16 @@ export default function Sidebar({
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs font-serif text-[#334155]">
-          <Link href="/archive" className="flex items-center justify-between hover:underline">
-            <span>2026</span>
-            <span className="text-neutral-400 font-sans text-[11px]">(31)</span>
-          </Link>
-          <Link href="/archive" className="flex items-center justify-between hover:underline">
-            <span>2025</span>
-            <span className="text-neutral-400 font-sans text-[11px]">(64)</span>
-          </Link>
-          <Link href="/archive" className="flex items-center justify-between hover:underline">
-            <span>2024</span>
-            <span className="text-neutral-400 font-sans text-[11px]">(58)</span>
-          </Link>
-          <Link href="/archive" className="flex items-center justify-between hover:underline">
-            <span>2023</span>
-            <span className="text-neutral-400 font-sans text-[11px]">(72)</span>
-          </Link>
-          <Link href="/archive" className="flex items-center justify-between hover:underline">
-            <span>2022</span>
-            <span className="text-neutral-400 font-sans text-[11px]">(69)</span>
-          </Link>
-          <Link href="/archive" className="flex items-center justify-between hover:underline">
-            <span>2021</span>
-            <span className="text-neutral-400 font-sans text-[11px]">(54)</span>
-          </Link>
+          {archiveEntries.map((arch) => (
+            <Link
+              key={arch.year}
+              href={`/archive?year=${arch.year}`}
+              className="flex items-center justify-between hover:underline"
+            >
+              <span>{arch.year}</span>
+              <span className="text-neutral-400 font-sans text-[11px]">({arch.count})</span>
+            </Link>
+          ))}
         </div>
 
         <div className="pt-2">
