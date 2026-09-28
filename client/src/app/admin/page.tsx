@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Post, Comment, BlogStats, SiteSetting } from "@/types";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard,
   FileText,
@@ -34,7 +35,8 @@ import {
   Check,
   Globe,
   Clock,
-  Settings
+  Settings,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
 
@@ -55,6 +57,7 @@ interface Subscriber {
 
 export default function ProfessionalAdminDashboard() {
   const router = useRouter();
+  const { user, isAuthenticated, isAdmin, isLoading: authLoading, logout } = useAuth();
 
   // Navigation tabs
   const [currentTab, setCurrentTab] = useState<"overview" | "posts" | "editor" | "comments" | "messages" | "subscribers" | "settings">("overview");
@@ -104,16 +107,15 @@ export default function ProfessionalAdminDashboard() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    if (authLoading) return;
 
-    if (!token || role !== "admin") {
-      router.push("/login");
+    if (!isAuthenticated || !isAdmin) {
+      router.replace("/login");
       return;
     }
 
     loadDashboard();
-  }, [router]);
+  }, [authLoading, isAuthenticated, isAdmin, router]);
 
   const loadDashboard = async () => {
     setLoading(true);
@@ -138,9 +140,8 @@ export default function ProfessionalAdminDashboard() {
       }
     } catch (err: any) {
       if (err.response?.status === 401 || err.response?.status === 403) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("role");
-        router.push("/login");
+        logout();
+        router.replace("/login");
       }
     } finally {
       setLoading(false);
@@ -148,9 +149,7 @@ export default function ProfessionalAdminDashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    window.dispatchEvent(new Event("storage"));
+    logout();
     router.push("/login");
   };
 
@@ -274,6 +273,24 @@ export default function ProfessionalAdminDashboard() {
   const categoryList = Array.from(
     new Set(["Family", "Faith", "Culture", "History", "Commentary", "Humor", ...posts.map((p) => p.category || "Faith")])
   );
+
+  if (authLoading) {
+    return (
+      <div className="min-h-[500px] flex flex-col items-center justify-center space-y-4 font-serif">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-700" />
+        <p className="text-xs text-slate-500 font-sans">Verifying editorial credentials...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !isAdmin) {
+    return (
+      <div className="min-h-[500px] flex flex-col items-center justify-center space-y-3 font-serif">
+        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+        <p className="text-xs text-slate-500 font-sans">Redirecting to editorial login...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] -mx-4 sm:-mx-6 lg:-mx-8 -my-2 flex flex-col md:flex-row text-slate-800 font-sans antialiased">
@@ -451,10 +468,12 @@ export default function ProfessionalAdminDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2.5">
               <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-xs text-white uppercase">
-                {settings.author_name ? settings.author_name.charAt(0) : "A"}
+                {user?.name ? user.name.charAt(0) : settings.author_name ? settings.author_name.charAt(0) : "A"}
               </div>
-              <div>
-                <span className="text-xs font-semibold text-white block">{settings.author_name}</span>
+              <div className="overflow-hidden">
+                <span className="text-xs font-semibold text-white block truncate max-w-[120px]">
+                  {user?.name || settings.author_name || "Administrator"}
+                </span>
                 <span className="text-[10px] text-emerald-400 font-medium">Administrator</span>
               </div>
             </div>

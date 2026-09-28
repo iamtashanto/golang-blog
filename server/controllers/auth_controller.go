@@ -105,3 +105,39 @@ func Login(c *gin.Context) {
 		},
 	})
 }
+
+// GetMe returns the authenticated user details
+func GetMe(c *gin.Context) {
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var user models.User
+	var err error
+	switch v := userIDVal.(type) {
+	case float64:
+		err = config.DB.First(&user, uint(v)).Error
+	case uint:
+		err = config.DB.First(&user, v).Error
+	case int:
+		err = config.DB.First(&user, uint(v)).Error
+	default:
+		err = config.DB.Where("id = ?", userIDVal).First(&user).Error
+	}
+
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found or session expired"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"user": gin.H{
+			"id":    user.ID,
+			"name":  user.Name,
+			"email": user.Email,
+			"role":  user.Role,
+		},
+	})
+}

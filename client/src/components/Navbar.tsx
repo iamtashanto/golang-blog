@@ -5,13 +5,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { CategoryCount, SiteSetting } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 import { Search, Rss, ChevronDown, LogOut, LayoutDashboard, LogIn, Menu, X } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [token, setToken] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryCount[]>([]);
   const [settings, setSettings] = useState<SiteSetting>({
@@ -24,14 +24,7 @@ export default function Navbar() {
   });
 
   useEffect(() => {
-    const checkAuth = () => {
-      setToken(localStorage.getItem("token"));
-      setRole(localStorage.getItem("role"));
-    };
-    checkAuth();
-    window.addEventListener("storage", checkAuth);
-
-    // Fetch dynamic settings & categories
+    // Fetch dynamic settings & categories once on mount
     api.get("/settings").then((res) => {
       if (res.data.data) setSettings(res.data.data);
     }).catch(() => {});
@@ -39,15 +32,10 @@ export default function Navbar() {
     api.get("/categories").then((res) => {
       if (res.data.data) setCategories(res.data.data);
     }).catch(() => {});
-
-    return () => window.removeEventListener("storage", checkAuth);
-  }, [pathname]);
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    setToken(null);
-    setRole(null);
+    logout();
     router.push("/");
   };
 
@@ -129,15 +117,21 @@ export default function Navbar() {
 
           {/* Right: Search, RSS & Admin */}
           <div className="flex items-center space-x-4 text-[#475569]">
-            {token ? (
+            {isAuthenticated ? (
               <div className="flex items-center space-x-2 text-xs font-sans">
-                <Link
-                  href="/admin"
-                  className="flex items-center space-x-1 font-semibold text-[#162f4d] hover:underline"
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5" />
-                  <span>Admin</span>
-                </Link>
+                {isAdmin ? (
+                  <Link
+                    href="/admin"
+                    className="flex items-center space-x-1 font-semibold text-[#162f4d] hover:underline"
+                  >
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                    <span>Admin Studio</span>
+                  </Link>
+                ) : (
+                  <span className="text-slate-600 text-xs font-medium">
+                    {user?.name || "Contributor"}
+                  </span>
+                )}
                 <button
                   onClick={handleLogout}
                   title="Logout"

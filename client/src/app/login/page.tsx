@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
-import { LogIn, UserPlus, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { AlertCircle, CheckCircle2, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 function AuthContent() {
@@ -11,24 +12,26 @@ function AuthContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") === "register" ? "register" : "login";
 
+  const { isAuthenticated, isAdmin, isLoading, login } = useAuth();
+
   const [tab, setTab] = useState<"login" | "register">(initialTab);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      router.push("/admin");
+    // Only redirect if auth status is known and user is already logged in as admin
+    if (!isLoading && isAuthenticated && isAdmin) {
+      router.replace("/admin");
     }
-  }, [router]);
+  }, [isLoading, isAuthenticated, isAdmin, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     setError(null);
     setSuccess(null);
 
@@ -42,24 +45,28 @@ function AuthContent() {
         setSuccess("Account created successfully. You may now sign in.");
         setTab("login");
       } else {
-        const res = await api.post("/auth/login", {
-          email,
-          password,
-        });
-
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("role", res.data.user.role);
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-
-        window.dispatchEvent(new Event("storage"));
-        router.push("/admin");
+        const loggedInUser = await login(email, password);
+        if (loggedInUser.role === "admin") {
+          router.push("/admin");
+        } else {
+          router.push("/");
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.error || "Authentication failed. Please verify credentials.");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-md mx-auto py-24 text-center space-y-3">
+        <Loader2 className="w-6 h-6 animate-spin mx-auto text-neutral-400" />
+        <p className="text-xs font-serif text-neutral-500">Checking credentials...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto py-12 px-4 font-serif">
@@ -178,10 +185,10 @@ function AuthContent() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={submitting}
             className="w-full py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold uppercase tracking-wider transition disabled:opacity-50"
           >
-            {loading ? "Authenticating..." : tab === "login" ? "Enter Studio" : "Create Account"}
+            {submitting ? "Authenticating..." : tab === "login" ? "Enter Studio" : "Create Account"}
           </button>
         </form>
       </div>

@@ -57,6 +57,7 @@ func main() {
 	// Auth routes
 	r.POST("/auth/register", controllers.Register)
 	r.POST("/auth/login", controllers.Login)
+	r.GET("/auth/me", middlewares.RequireAuth(), controllers.GetMe)
 
 	// Public Blog routes
 	r.GET("/posts", controllers.FindPosts)
