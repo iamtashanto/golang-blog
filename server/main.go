@@ -16,7 +16,13 @@ func main() {
 	config.ConnectDatabase()
 
 	// Auto Migrate the models
-	err := config.DB.AutoMigrate(&models.Post{}, &models.User{}, &models.Comment{})
+	err := config.DB.AutoMigrate(
+		&models.Post{},
+		&models.User{},
+		&models.Comment{},
+		&models.Subscriber{},
+		&models.ContactMessage{},
+	)
 	if err != nil {
 		log.Fatalf("Failed to auto-migrate: %v", err)
 	}
@@ -40,6 +46,10 @@ func main() {
 		})
 	})
 
+	// RSS 2.0 Feed
+	r.GET("/rss", controllers.GenerateRSSFeed)
+	r.GET("/feed.xml", controllers.GenerateRSSFeed)
+
 	// Auth routes
 	r.POST("/auth/register", controllers.Register)
 	r.POST("/auth/login", controllers.Login)
@@ -54,6 +64,10 @@ func main() {
 	r.GET("/archive", controllers.GetArchive)
 	r.GET("/stats", controllers.GetStats)
 
+	// Newsletter & Correspondence
+	r.POST("/newsletter", controllers.SubscribeNewsletter)
+	r.POST("/contact", controllers.SendContactMessage)
+
 	// Protected Admin routes
 	adminRoutes := r.Group("/")
 	adminRoutes.Use(middlewares.RequireAuth(), middlewares.RequireAdmin())
@@ -64,6 +78,8 @@ func main() {
 		adminRoutes.DELETE("/comments/:id", controllers.DeleteComment)
 		adminRoutes.GET("/admin/comments", controllers.GetAllComments)
 		adminRoutes.GET("/admin/stats", controllers.GetStats)
+		adminRoutes.GET("/admin/subscribers", controllers.GetSubscribers)
+		adminRoutes.GET("/admin/messages", controllers.GetContactMessages)
 	}
 
 	// Start the server

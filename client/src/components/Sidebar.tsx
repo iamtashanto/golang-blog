@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CategoryCount } from "@/types";
-import { Search, Rss, Square, History, Calendar } from "lucide-react";
+import { api } from "@/lib/api";
+import { Search, Rss, Square, History, Calendar, Check, AlertCircle } from "lucide-react";
 
 interface SidebarProps {
   categories: CategoryCount[];
@@ -18,9 +19,29 @@ export default function Sidebar({
   setSearchQuery,
   onSearchSubmit,
 }: SidebarProps) {
-  const [subscribed, setSubscribed] = useState(false);
+  const [email, setEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+  const [subMsg, setSubMsg] = useState<string | null>(null);
+  const [showEmailInput, setShowEmailInput] = useState(false);
 
-  // Default category display list if database categories are empty/different
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    setSubscribing(true);
+    setSubMsg(null);
+    try {
+      const res = await api.post("/newsletter", { email });
+      setSubMsg(res.data.message || "Successfully subscribed to the chronicle dispatch!");
+      setEmail("");
+      setTimeout(() => setShowEmailInput(false), 3000);
+    } catch (err: any) {
+      setSubMsg(err.response?.data?.error || "Failed to subscribe. Please try again.");
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
   const displayCategories = categories.length > 0 ? categories : [
     { category: "Family", count: 42 },
     { category: "Faith", count: 89 },
@@ -77,13 +98,49 @@ export default function Sidebar({
           Chronicling ordinary days, historic curiosities, and the enduring truths that anchor our households in an accelerating world.
         </p>
 
-        <button
-          onClick={() => setSubscribed(!subscribed)}
-          className="w-full py-2 px-4 bg-[#162f4d] hover:bg-[#0f233a] text-white text-[11px] font-sans font-semibold tracking-wider transition flex items-center justify-center space-x-2 rounded-sm shadow-sm"
-        >
-          <Rss className="w-3.5 h-3.5" />
-          <span>{subscribed ? "Subscribed to RSS" : "Subscribe via RSS"}</span>
-        </button>
+        {subMsg && (
+          <div className="text-[11px] font-sans p-2 bg-white border border-[#cbd5e1] text-[#162f4d]">
+            {subMsg}
+          </div>
+        )}
+
+        {showEmailInput ? (
+          <form onSubmit={handleSubscribe} className="space-y-2 pt-1 font-sans">
+            <input
+              type="email"
+              placeholder="Enter your email address..."
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-2.5 py-1.5 text-xs bg-white border border-[#cbd5e1] focus:outline-none focus:border-[#162f4d]"
+            />
+            <button
+              type="submit"
+              disabled={subscribing}
+              className="w-full py-1.5 bg-[#162f4d] hover:bg-[#0f233a] text-white text-[11px] font-semibold tracking-wider uppercase transition disabled:opacity-50"
+            >
+              {subscribing ? "Subscribing..." : "Confirm Subscription"}
+            </button>
+          </form>
+        ) : (
+          <div className="space-y-2">
+            <button
+              onClick={() => setShowEmailInput(true)}
+              className="w-full py-2 px-4 bg-[#162f4d] hover:bg-[#0f233a] text-white text-[11px] font-sans font-semibold tracking-wider transition flex items-center justify-center space-x-2 rounded-sm shadow-sm"
+            >
+              <Rss className="w-3.5 h-3.5" />
+              <span>Subscribe via RSS / Email</span>
+            </button>
+            <a
+              href="http://localhost:8080/rss"
+              target="_blank"
+              rel="noreferrer"
+              className="block text-[10px] text-[#64748b] hover:text-[#162f4d] underline font-sans"
+            >
+              View Raw XML Feed (/rss)
+            </a>
+          </div>
+        )}
       </div>
 
       {/* 3. CATEGORIES WIDGET */}
@@ -125,44 +182,41 @@ export default function Sidebar({
         </p>
 
         <div className="space-y-2.5">
-          {/* Card 1 */}
-          <div className="bg-[#f0f4f8] p-3 rounded border border-[#e2e8f0]/80 space-y-0.5">
+          <Link href="/archive" className="block bg-[#f0f4f8] p-3 rounded border border-[#e2e8f0]/80 space-y-0.5 hover:border-[#cbd5e1] transition">
             <span className="text-[10px] font-sans font-medium text-[#64748b]">
               2008 • 18 years ago
             </span>
-            <h5 className="text-xs font-serif font-bold text-[#162f4d]">
+            <h5 className="text-xs font-serif font-bold text-[#162f4d] hover:underline">
               Off to City Hall
             </h5>
             <p className="text-[11px] font-serif text-[#475569] line-clamp-1 italic">
               Filing building permits for the carriage house...
             </p>
-          </div>
+          </Link>
 
-          {/* Card 2 */}
-          <div className="bg-[#f0f4f8] p-3 rounded border border-[#e2e8f0]/80 space-y-0.5">
+          <Link href="/archive" className="block bg-[#f0f4f8] p-3 rounded border border-[#e2e8f0]/80 space-y-0.5 hover:border-[#cbd5e1] transition">
             <span className="text-[10px] font-sans font-medium text-[#64748b]">
               2012 • 14 years ago
             </span>
-            <h5 className="text-xs font-serif font-bold text-[#162f4d]">
+            <h5 className="text-xs font-serif font-bold text-[#162f4d] hover:underline">
               Summer Storms and Screen Porches
             </h5>
             <p className="text-[11px] font-serif text-[#475569] line-clamp-1 italic">
               Watching lightning dance across the western hill...
             </p>
-          </div>
+          </Link>
 
-          {/* Card 3 */}
-          <div className="bg-[#f0f4f8] p-3 rounded border border-[#e2e8f0]/80 space-y-0.5">
+          <Link href="/archive" className="block bg-[#f0f4f8] p-3 rounded border border-[#e2e8f0]/80 space-y-0.5 hover:border-[#cbd5e1] transition">
             <span className="text-[10px] font-sans font-medium text-[#64748b]">
               2018 • 8 years ago
             </span>
-            <h5 className="text-xs font-serif font-bold text-[#162f4d]">
+            <h5 className="text-xs font-serif font-bold text-[#162f4d] hover:underline">
               Reflections on the Old Cedar Tree
             </h5>
             <p className="text-[11px] font-serif text-[#475569] line-clamp-1 italic">
               When thirty years of roots yield to a single sudd...
             </p>
-          </div>
+          </Link>
         </div>
       </div>
 
