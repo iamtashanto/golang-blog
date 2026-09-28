@@ -16,14 +16,20 @@ func main() {
 	config.ConnectDatabase()
 
 	// Auto Migrate the models
-	err := config.DB.AutoMigrate(&models.Post{}, &models.User{})
+	err := config.DB.AutoMigrate(&models.Post{}, &models.User{}, &models.Comment{})
 	if err != nil {
 		log.Fatalf("Failed to auto-migrate: %v", err)
 	}
 
 	// Setup Gin router
 	r := gin.Default()
-	r.Use(cors.Default())
+
+	// Configure CORS
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	r.Use(cors.New(corsConfig))
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -35,17 +41,26 @@ func main() {
 	r.POST("/auth/register", controllers.Register)
 	r.POST("/auth/login", controllers.Login)
 
-	// Public Post routes
+	// Public Blog routes
 	r.GET("/posts", controllers.FindPosts)
 	r.GET("/posts/:id", controllers.FindPost)
+	r.POST("/posts/:id/like", controllers.LikePost)
+	r.GET("/posts/:id/comments", controllers.GetCommentsByPost)
+	r.POST("/posts/:id/comments", controllers.CreateComment)
+	r.GET("/categories", controllers.GetCategories)
+	r.GET("/archive", controllers.GetArchive)
+	r.GET("/stats", controllers.GetStats)
 
-	// Protected Admin Post routes
+	// Protected Admin routes
 	adminRoutes := r.Group("/")
 	adminRoutes.Use(middlewares.RequireAuth(), middlewares.RequireAdmin())
 	{
 		adminRoutes.POST("/posts", controllers.CreatePost)
 		adminRoutes.PUT("/posts/:id", controllers.UpdatePost)
 		adminRoutes.DELETE("/posts/:id", controllers.DeletePost)
+		adminRoutes.DELETE("/comments/:id", controllers.DeleteComment)
+		adminRoutes.GET("/admin/comments", controllers.GetAllComments)
+		adminRoutes.GET("/admin/stats", controllers.GetStats)
 	}
 
 	// Start the server
