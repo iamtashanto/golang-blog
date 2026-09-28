@@ -20,15 +20,33 @@ func ConnectDatabase() {
 		log.Println("No .env file found, relying on system environment variables")
 	}
 
-	host := os.Getenv("DB_HOST")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
-	port := os.Getenv("DB_PORT")
+	databaseURL := os.Getenv("DATABASE_URL")
+	var dsn string
 
-	dsn := fmt.Sprintf("host=%s user=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Dhaka", host, user, dbname, port)
-	if password != "" {
-		dsn += fmt.Sprintf(" password=%s", password)
+	if databaseURL != "" {
+		dsn = databaseURL
+	} else {
+		host := os.Getenv("DB_HOST")
+		user := os.Getenv("DB_USER")
+		password := os.Getenv("DB_PASSWORD")
+		dbname := os.Getenv("DB_NAME")
+		port := os.Getenv("DB_PORT")
+		if port == "" {
+			port = "5432"
+		}
+		sslmode := os.Getenv("DB_SSLMODE")
+		if sslmode == "" {
+			if host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "" {
+				sslmode = "disable"
+			} else {
+				sslmode = "require"
+			}
+		}
+
+		dsn = fmt.Sprintf("host=%s user=%s dbname=%s port=%s sslmode=%s TimeZone=Asia/Dhaka", host, user, dbname, port, sslmode)
+		if password != "" {
+			dsn += fmt.Sprintf(" password=%s", password)
+		}
 	}
 
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
