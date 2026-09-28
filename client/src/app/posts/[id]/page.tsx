@@ -5,20 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Post } from "@/types";
 import { api } from "@/lib/api";
 import CommentSection from "@/components/CommentSection";
-import { 
-  Eye, 
-  ThumbsUp, 
-  MessageSquare, 
-  Calendar, 
-  Clock, 
-  ArrowLeft, 
-  Share2, 
-  Check, 
-  User, 
-  Bookmark, 
-  Sparkles,
-  Layers
-} from "lucide-react";
+import { Eye, ThumbsUp, ArrowLeft, Share2, Check } from "lucide-react";
 import Link from "next/link";
 
 export default function PostDetailPage() {
@@ -69,15 +56,10 @@ export default function PostDetailPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto py-12 space-y-6 animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-24"></div>
-        <div className="h-10 bg-gray-200 rounded w-3/4"></div>
-        <div className="h-72 bg-gray-100 rounded-3xl"></div>
-        <div className="space-y-3">
-          <div className="h-4 bg-gray-100 rounded w-full"></div>
-          <div className="h-4 bg-gray-100 rounded w-5/6"></div>
-          <div className="h-4 bg-gray-100 rounded w-4/6"></div>
-        </div>
+      <div className="max-w-3xl mx-auto py-12 space-y-6 animate-pulse">
+        <div className="h-4 bg-neutral-200 w-24"></div>
+        <div className="h-10 bg-neutral-200 w-4/5"></div>
+        <div className="h-64 bg-neutral-200"></div>
       </div>
     );
   }
@@ -85,14 +67,14 @@ export default function PostDetailPage() {
   if (!post) {
     return (
       <div className="max-w-md mx-auto py-20 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-gray-800">Article not found</h2>
-        <p className="text-sm text-gray-500">The post you are looking for might have been removed or is temporarily unavailable.</p>
+        <h2 className="text-2xl font-serif font-bold text-neutral-800">Essay not found</h2>
+        <p className="text-xs text-neutral-500 font-serif">The article you are looking for might have been retired from the chronicle.</p>
         <Link
           href="/"
-          className="inline-flex items-center space-x-2 px-5 py-2.5 bg-indigo-600 text-white text-xs font-semibold rounded-xl hover:bg-indigo-700 transition"
+          className="inline-flex items-center space-x-1 text-xs font-semibold text-neutral-900 underline"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Articles</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Return to Index</span>
         </Link>
       </div>
     );
@@ -100,138 +82,117 @@ export default function PostDetailPage() {
 
   const words = (post.content || "").trim().split(/\s+/).length;
   const readingTime = Math.max(1, Math.ceil(words / 200));
+  const formattedDate = new Date(post.CreatedAt).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
   return (
-    <article className="max-w-4xl mx-auto space-y-8 pb-16">
-      {/* Top Navigation & Breadcrumbs */}
-      <div className="flex items-center justify-between text-xs text-gray-500">
-        <button
-          onClick={() => router.back()}
-          className="inline-flex items-center space-x-1.5 hover:text-indigo-600 transition-colors font-medium"
+    <article className="max-w-3xl mx-auto space-y-8 pb-16">
+      {/* Top Breadcrumb */}
+      <div>
+        <Link
+          href="/"
+          className="inline-flex items-center space-x-1 text-xs text-neutral-500 hover:text-black font-serif transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
-        </button>
-
-        <div className="flex items-center space-x-2">
-          <Link href={`/categories?selected=${post.category}`} className="inline-flex items-center space-x-1 text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full font-semibold border border-indigo-100">
-            <Layers className="w-3 h-3" />
-            <span>{post.category || "General"}</span>
-          </Link>
-          <span className="flex items-center space-x-1 text-gray-400">
-            <Clock className="w-3 h-3" />
-            <span>{readingTime} min read</span>
-          </span>
-        </div>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to All Chronicles</span>
+        </Link>
       </div>
 
-      {/* Title & Metadata Header */}
-      <div className="space-y-4">
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+      {/* Header & Byline */}
+      <div className="space-y-4 border-b border-neutral-300 pb-6">
+        <div className="text-[11px] font-bold tracking-[0.2em] text-neutral-500 uppercase font-sans">
+          {post.category || "GENERAL"} • {formattedDate} • {readingTime} MIN READ
+        </div>
+
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-neutral-900 leading-tight">
           {post.title}
         </h1>
 
         {post.summary && (
-          <p className="text-lg text-gray-600 leading-relaxed font-light">
+          <p className="text-base sm:text-lg font-serif italic text-neutral-600 leading-relaxed">
             {post.summary}
           </p>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-4 py-4 border-y border-gray-100">
-          {/* Author info */}
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-              <User className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-gray-900">Tech Author</h4>
-              <p className="text-[10px] text-gray-400 flex items-center space-x-1.5">
-                <Calendar className="w-3 h-3" />
-                <span>{new Date(post.CreatedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
-              </p>
-            </div>
-          </div>
+        <div className="pt-2 flex items-center justify-between text-xs text-neutral-500 font-serif">
+          <span>By Editorial Columnist</span>
 
-          {/* Social Stats & Share */}
-          <div className="flex items-center space-x-3 text-xs">
-            <div className="flex items-center space-x-1.5 bg-gray-50 px-3 py-1.5 rounded-xl text-gray-600 border border-gray-100">
-              <Eye className="w-3.5 h-3.5 text-blue-500" />
-              <span className="font-semibold">{post.views || 0}</span>
-              <span className="text-gray-400">views</span>
-            </div>
+          <div className="flex items-center space-x-4">
+            <span className="flex items-center space-x-1 font-sans text-xs">
+              <Eye className="w-3.5 h-3.5 text-neutral-400" />
+              <span>{post.views || 0} views</span>
+            </span>
 
             <button
               onClick={handleLike}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl font-semibold border transition-all ${
-                liked
-                  ? "bg-rose-50 text-rose-600 border-rose-200 shadow-sm"
-                  : "bg-gray-50 text-gray-600 border-gray-100 hover:bg-rose-50 hover:text-rose-600"
+              className={`flex items-center space-x-1 font-sans text-xs hover:text-neutral-900 transition ${
+                liked ? "text-rose-600 font-bold" : ""
               }`}
             >
-              <ThumbsUp className={`w-3.5 h-3.5 ${liked ? "fill-rose-500" : ""}`} />
+              <ThumbsUp className={`w-3.5 h-3.5 ${liked ? "fill-rose-500 text-rose-500" : ""}`} />
               <span>{likes}</span>
             </button>
 
             <button
               onClick={handleShare}
-              className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-100 transition-colors"
+              className="flex items-center space-x-1 hover:text-neutral-900 transition"
+              title="Copy Link"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
-              <span>{copied ? "Copied!" : "Share"}</span>
+              <span>{copied ? "Copied" : "Share"}</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Featured Cover Image */}
+      {/* Featured Image (if available) */}
       {post.image_url && (
-        <div className="w-full h-80 sm:h-96 rounded-3xl overflow-hidden bg-gray-100 shadow-md">
+        <div className="w-full h-72 sm:h-96 bg-neutral-100 border border-neutral-300 overflow-hidden shadow-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={post.image_url}
             alt={post.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover grayscale contrast-110"
           />
         </div>
       )}
 
-      {/* Main Blog Post Content Body */}
-      <div className="bg-white p-8 sm:p-12 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-        <div className="prose prose-indigo max-w-none text-gray-800 text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
-          {post.content}
+      {/* Body Content */}
+      <div className="font-serif text-base sm:text-lg text-neutral-900 leading-relaxed space-y-6 whitespace-pre-wrap">
+        {post.content}
+      </div>
+
+      {/* Article Footer & Like Action Box */}
+      <div className="border-t border-b border-neutral-200 py-6 my-8 flex flex-col sm:flex-row items-center justify-between gap-4 font-serif text-xs text-neutral-600">
+        <div>
+          <p className="font-bold text-neutral-900">Found value in this chronicle?</p>
+          <p className="text-[11px] text-neutral-500">Record your appreciation with a like or share with your fellow engineers.</p>
         </div>
 
-        {/* Post Footer Action Box */}
-        <div className="pt-8 mt-8 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/60 p-6 rounded-2xl">
-          <div>
-            <h5 className="text-sm font-bold text-gray-900">Enjoyed this article?</h5>
-            <p className="text-xs text-gray-500">Hit the like button to show your appreciation or share with friends!</p>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={handleLike}
-              className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-sm ${
-                liked
-                  ? "bg-rose-500 text-white shadow-rose-500/25"
-                  : "bg-white text-gray-700 hover:bg-rose-50 hover:text-rose-600 border border-gray-200"
-              }`}
-            >
-              <ThumbsUp className={`w-4 h-4 ${liked ? "fill-white" : ""}`} />
-              <span>{liked ? "Liked!" : "Like"} ({likes})</span>
-            </button>
-            <button
-              onClick={handleShare}
-              className="flex items-center space-x-2 px-4 py-2.5 bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 rounded-xl text-xs font-semibold transition"
-            >
-              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
-              <span>{copied ? "Link Copied" : "Share"}</span>
-            </button>
-          </div>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={handleLike}
+            className={`px-4 py-2 text-xs uppercase tracking-wider font-semibold border transition ${
+              liked
+                ? "bg-neutral-900 text-white border-neutral-900"
+                : "bg-white text-neutral-800 border-neutral-300 hover:border-neutral-900"
+            }`}
+          >
+            {liked ? `Appreciated (${likes})` : `Like Essay (${likes})`}
+          </button>
+          <button
+            onClick={handleShare}
+            className="px-4 py-2 text-xs uppercase tracking-wider font-semibold bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-neutral-800 transition"
+          >
+            {copied ? "Link Copied" : "Share Article"}
+          </button>
         </div>
       </div>
 
-      {/* Comments Section Component */}
+      {/* Comments Section */}
       <CommentSection postId={post.ID} initialComments={post.comments || []} />
     </article>
   );

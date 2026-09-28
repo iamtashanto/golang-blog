@@ -3,18 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { 
-  BookOpen, 
-  Sparkles, 
-  Layers, 
-  Archive, 
-  LayoutDashboard, 
-  LogIn, 
-  LogOut, 
-  Menu, 
-  X,
-  PenSquare
-} from "lucide-react";
+import { Search, Rss, LogOut, LayoutDashboard, LogIn, Menu, X } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -42,176 +31,126 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { name: "Home", href: "/", icon: BookOpen },
-    { name: "Categories", href: "/categories", icon: Layers },
-    { name: "Archive", href: "/archive", icon: Archive },
+    { name: "Home", href: "/" },
+    { name: "About", href: "/about" },
+    { name: "Categories", href: "/categories" },
+    { name: "Archives", href: "/archive" },
+    { name: "Contact", href: "/about#contact" },
   ];
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-gray-100 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Brand Logo */}
-          <Link href="/" className="flex items-center space-x-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-indigo-950 to-blue-900 tracking-tight">
-                Golang<span className="text-indigo-600">Blog</span>
-              </span>
-              <span className="text-[10px] font-medium text-gray-400 tracking-widest uppercase -mt-1">
-                Go + Next.js Engine
-              </span>
-            </div>
-          </Link>
+    <header className="bg-[#fdfdfc] border-b border-neutral-200 mb-8">
+      {/* Newspaper Masthead */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 pb-6 text-center">
+        <Link href="/" className="inline-block group">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif tracking-tight text-neutral-900 group-hover:text-neutral-700 transition-colors">
+            The Golang Chronicle
+          </h1>
+        </Link>
+        <p className="mt-2 text-[11px] sm:text-xs font-semibold tracking-[0.25em] text-neutral-500 uppercase">
+          Reflections on Software, Golang, Architecture & Systems
+        </p>
+      </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
+      {/* Main Menu Bar */}
+      <div className="border-t border-b border-neutral-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-12">
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center space-x-6 text-xs sm:text-sm font-medium tracking-wide text-neutral-700">
             {navLinks.map((link) => {
-              const Icon = link.icon;
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? "text-indigo-600 bg-indigo-50/80 font-semibold"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  className={`hover:text-black transition-colors relative py-1 ${
+                    isActive ? "font-bold text-black underline underline-offset-8 decoration-1" : ""
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? "text-indigo-600" : "text-gray-400"}`} />
-                  <span>{link.name}</span>
+                  {link.name}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Action Buttons */}
-          <div className="hidden md:flex items-center space-x-3">
+          {/* Right Utilities */}
+          <div className="flex items-center space-x-4 text-neutral-600">
             {token ? (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3 text-xs">
                 <Link
                   href="/admin"
-                  className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
-                    pathname.startsWith("/admin")
-                      ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
-                      : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                  }`}
+                  className="flex items-center space-x-1.5 font-semibold text-neutral-900 hover:text-indigo-600 transition-colors"
                 >
-                  <LayoutDashboard className="w-4 h-4" />
-                  <span>Admin Dashboard</span>
-                  {role === "admin" && (
-                    <span className="text-[10px] bg-indigo-500/30 text-indigo-100 font-bold px-1.5 py-0.5 rounded uppercase">
-                      Admin
-                    </span>
-                  )}
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  <span>Admin Studio</span>
                 </Link>
                 <button
                   onClick={handleLogout}
                   title="Logout"
-                  className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                  className="hover:text-rose-600 transition-colors p-1"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
-                <Link
-                  href="/login"
-                  className="flex items-center space-x-1.5 px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-lg transition-colors"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>Sign In</span>
-                </Link>
-                <Link
-                  href="/login?tab=register"
-                  className="flex items-center space-x-1.5 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 rounded-lg shadow-sm shadow-indigo-500/25 transition-all hover:shadow"
-                >
-                  <PenSquare className="w-4 h-4" />
-                  <span>Get Started</span>
-                </Link>
-              </div>
+              <Link
+                href="/login"
+                className="text-xs font-semibold text-neutral-700 hover:text-black flex items-center space-x-1"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </Link>
             )}
-          </div>
 
-          {/* Mobile menu button */}
-          <div className="flex md:hidden items-center">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            <div className="h-4 w-px bg-neutral-200 hidden sm:block"></div>
+
+            <Link href="/archive" title="Search Articles" className="hover:text-black transition-colors p-1">
+              <Search className="w-4 h-4" />
+            </Link>
+            <a
+              href="#"
+              onClick={(e) => { e.preventDefault(); alert("RSS Feed subscribed!"); }}
+              title="RSS Feed"
+              className="hover:text-black transition-colors p-1"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+              <Rss className="w-4 h-4" />
+            </a>
+
+            {/* Mobile Menu Toggle */}
+            <div className="md:hidden flex items-center">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-1 text-neutral-700 hover:text-black"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Navigation Drawer */}
+      {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-gray-100 bg-white px-4 pt-2 pb-6 space-y-2 animate-in slide-in-from-top-2">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.name}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-base font-medium ${
-                  isActive ? "text-indigo-600 bg-indigo-50 font-semibold" : "text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span>{link.name}</span>
-              </Link>
-            );
-          })}
-
-          <div className="pt-4 border-t border-gray-100 space-y-2">
-            {token ? (
-              <>
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-base font-medium text-indigo-600 bg-indigo-50"
-                >
-                  <LayoutDashboard className="w-5 h-5" />
-                  <span>Admin Dashboard</span>
-                </Link>
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-base font-medium text-rose-600 hover:bg-rose-50"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span>Logout</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center space-x-2 w-full px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg text-base font-medium"
-                >
-                  <LogIn className="w-5 h-5" />
-                  <span>Sign In</span>
-                </Link>
-                <Link
-                  href="/login?tab=register"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center space-x-2 w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-base font-medium"
-                >
-                  <PenSquare className="w-5 h-5" />
-                  <span>Create Account</span>
-                </Link>
-              </>
-            )}
-          </div>
+        <div className="md:hidden bg-white border-b border-neutral-200 px-4 py-4 space-y-3">
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              href={link.href}
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-sm font-medium text-neutral-800 hover:text-black py-1"
+            >
+              {link.name}
+            </Link>
+          ))}
+          {token && (
+            <Link
+              href="/admin"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-sm font-semibold text-indigo-700 py-1"
+            >
+              Admin Dashboard
+            </Link>
+          )}
         </div>
       )}
     </header>

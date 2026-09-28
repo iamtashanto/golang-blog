@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Comment } from "@/types";
 import { api } from "@/lib/api";
-import { MessageSquare, Send, User as UserIcon, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
+import { MessageSquare, Send, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface CommentSectionProps {
   postId: number;
@@ -34,7 +34,7 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
 
       setComments([res.data.data, ...comments]);
       setContent("");
-      setStatus({ type: "success", message: "Comment posted successfully!" });
+      setStatus({ type: "success", message: "Your response has been published." });
     } catch (err: any) {
       setStatus({
         type: "error",
@@ -46,31 +46,34 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
   };
 
   return (
-    <section className="space-y-8 pt-10 border-t border-gray-100">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
-          <MessageSquare className="w-5 h-5 text-indigo-600" />
-          <span>Comments ({comments.length})</span>
+    <section className="space-y-8 pt-10 border-t border-neutral-300 font-serif">
+      <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+        <h3 className="text-xl font-bold text-neutral-900">
+          Reader Responses ({comments.length})
         </h3>
-        <span className="text-xs text-gray-400">Join the discussion</span>
+        <span className="text-[11px] font-sans uppercase tracking-widest text-neutral-400">
+          Discussion
+        </span>
       </div>
 
       {/* Add Comment Form */}
-      <div className="bg-gradient-to-br from-slate-50 to-indigo-50/40 p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <h4 className="text-sm font-semibold text-gray-800 mb-4">Leave a Response</h4>
+      <div className="bg-[#f7f6f2] p-6 border border-neutral-200 space-y-4">
+        <h4 className="text-xs font-bold tracking-widest uppercase text-neutral-800 font-sans">
+          Leave a Written Response
+        </h4>
 
         {status && (
           <div
-            className={`p-3.5 rounded-xl text-xs flex items-center space-x-2 mb-4 ${
+            className={`p-3 text-xs flex items-center space-x-2 ${
               status.type === "success"
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : "bg-rose-50 text-rose-700 border border-rose-200"
+                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                : "bg-rose-50 text-rose-800 border border-rose-200"
             }`}
           >
             {status.type === "success" ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
             ) : (
-              <AlertCircle className="w-4 h-4 text-rose-500" />
+              <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
             )}
             <span>{status.message}</span>
           </div>
@@ -79,37 +82,43 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
         <form onSubmit={handleCommentSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Your Name *</label>
+              <label className="block text-[11px] font-semibold text-neutral-600 mb-1 font-sans uppercase tracking-wider">
+                Your Name *
+              </label>
               <input
                 type="text"
                 placeholder="e.g. John Doe"
                 required
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full px-3 py-2 text-xs bg-white border border-neutral-300 rounded-none focus:outline-none focus:border-neutral-900"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Email (Optional)</label>
+              <label className="block text-[11px] font-semibold text-neutral-600 mb-1 font-sans uppercase tracking-wider">
+                Email Address (Optional)
+              </label>
               <input
                 type="email"
                 placeholder="john@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full px-3 py-2 text-xs bg-white border border-neutral-300 rounded-none focus:outline-none focus:border-neutral-900"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Comment Content *</label>
+            <label className="block text-[11px] font-semibold text-neutral-600 mb-1 font-sans uppercase tracking-wider">
+              Your Remarks *
+            </label>
             <textarea
               rows={3}
-              placeholder="Write your thoughts or ask a question..."
+              placeholder="Join the discussion or add your thoughts on this essay..."
               required
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+              className="w-full px-3 py-2 text-xs bg-white border border-neutral-300 rounded-none focus:outline-none focus:border-neutral-900 font-serif leading-relaxed"
             ></textarea>
           </div>
 
@@ -117,10 +126,9 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center space-x-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-medium shadow-sm shadow-indigo-600/25 transition disabled:opacity-50"
+              className="px-5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold tracking-wider uppercase transition disabled:opacity-50"
             >
-              <Send className="w-3.5 h-3.5" />
-              <span>{loading ? "Posting..." : "Post Comment"}</span>
+              {loading ? "Posting..." : "Submit Response"}
             </button>
           </div>
         </form>
@@ -129,30 +137,28 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
       {/* Comment List */}
       <div className="space-y-4">
         {comments.length === 0 ? (
-          <div className="text-center py-10 bg-white rounded-2xl border border-gray-100 text-gray-400 text-xs">
-            No comments yet. Be the first to share your thoughts!
+          <div className="text-center py-8 text-neutral-400 text-xs italic">
+            No responses yet recorded on this chronicle.
           </div>
         ) : (
           comments.map((comment) => (
             <div
               key={comment.ID}
-              className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-2 hover:border-gray-200 transition"
+              className="p-4 bg-white border border-neutral-200/80 space-y-1.5"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold uppercase">
-                    {comment.author.slice(0, 2)}
-                  </div>
-                  <div>
-                    <h5 className="text-xs font-semibold text-gray-900">{comment.author}</h5>
-                    <span className="text-[10px] text-gray-400 flex items-center space-x-1">
-                      <Calendar className="w-3 h-3" />
-                      <span>{new Date(comment.CreatedAt).toLocaleDateString()}</span>
-                    </span>
-                  </div>
-                </div>
+                <span className="font-bold text-xs text-neutral-900 font-sans">
+                  {comment.author}
+                </span>
+                <span className="text-[10px] text-neutral-400 font-sans">
+                  {new Date(comment.CreatedAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
               </div>
-              <p className="text-xs text-gray-700 leading-relaxed pl-10 whitespace-pre-wrap">
+              <p className="text-xs text-neutral-700 leading-relaxed font-serif whitespace-pre-wrap">
                 {comment.content}
               </p>
             </div>
