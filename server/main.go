@@ -21,6 +21,9 @@ func main() {
 		log.Fatalf("Failed to auto-migrate: %v", err)
 	}
 
+	// Seed database with default articles if empty
+	config.SeedDatabase()
+
 	// Setup Gin router
 	r := gin.Default()
 
