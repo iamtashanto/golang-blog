@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, Rss, LogOut, LayoutDashboard, LogIn, Menu, X } from "lucide-react";
+import { Search, Rss, ChevronDown, LogOut, LayoutDashboard, LogIn, Menu, X } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -11,6 +11,7 @@ export default function Navbar() {
   const [token, setToken] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -30,64 +31,95 @@ export default function Navbar() {
     router.push("/");
   };
 
-  const navLinks = [
+  const navItems = [
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
-    { name: "Categories", href: "/categories" },
+    { name: "Categories", href: "/categories", hasDropdown: true },
     { name: "Archives", href: "/archive" },
     { name: "Contact", href: "/about#contact" },
   ];
 
+  const categoryList = ["Family", "Faith", "Culture", "History", "Commentary", "Humor"];
+
   return (
-    <header className="bg-[#fdfdfc] border-b border-neutral-200 mb-8">
-      {/* Newspaper Masthead */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 pb-6 text-center">
+    <header className="border-b border-neutral-200 pb-6 mb-8">
+      {/* 1. Centered Newspaper Masthead */}
+      <div className="text-center py-4 sm:py-6">
         <Link href="/" className="inline-block group">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif tracking-tight text-neutral-900 group-hover:text-neutral-700 transition-colors">
-            The Golang Chronicle
+          <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-serif font-bold tracking-tight text-[#162f4d] group-hover:opacity-90 transition-opacity">
+            The Castle Chronicle
           </h1>
         </Link>
-        <p className="mt-2 text-[11px] sm:text-xs font-semibold tracking-[0.25em] text-neutral-500 uppercase">
-          Reflections on Software, Golang, Architecture & Systems
+        <p className="mt-2 text-[11px] sm:text-xs font-semibold tracking-[0.25em] text-[#64748b] uppercase">
+          REFLECTIONS ON FAMILY, FAITH, CULTURE & HISTORY
         </p>
       </div>
 
-      {/* Main Menu Bar */}
-      <div className="border-t border-b border-neutral-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-12">
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-6 text-xs sm:text-sm font-medium tracking-wide text-neutral-700">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
+      {/* 2. Menu Navigation Bar with Top & Bottom Rules */}
+      <div className="border-t border-b border-neutral-200 mt-2">
+        <div className="flex items-center justify-between h-12 px-1 sm:px-2">
+          {/* Left: Navigation Links */}
+          <nav className="hidden md:flex items-center space-x-6 text-xs sm:text-[13px] font-medium text-[#334155]">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              if (item.hasDropdown) {
+                return (
+                  <div key={item.name} className="relative group">
+                    <Link
+                      href={item.href}
+                      className={`flex items-center space-x-1 py-3 hover:text-black transition-colors ${
+                        isActive ? "font-bold text-black border-b-2 border-black" : ""
+                      }`}
+                    >
+                      <span>{item.name}</span>
+                      <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
+                    </Link>
+
+                    {/* Dropdown Menu */}
+                    <div className="absolute left-0 top-full hidden group-hover:block bg-white border border-neutral-200 shadow-md py-1.5 w-40 z-50 text-xs font-serif">
+                      {categoryList.map((cat) => (
+                        <Link
+                          key={cat}
+                          href={`/categories?selected=${encodeURIComponent(cat)}`}
+                          className="block px-4 py-1.5 text-neutral-700 hover:bg-[#f1f5f9] hover:text-black"
+                        >
+                          {cat}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <Link
-                  key={link.name}
-                  href={link.href}
-                  className={`hover:text-black transition-colors relative py-1 ${
-                    isActive ? "font-bold text-black underline underline-offset-8 decoration-1" : ""
+                  key={item.name}
+                  href={item.href}
+                  className={`py-3 hover:text-black transition-colors ${
+                    isActive ? "font-bold text-black border-b-2 border-black" : ""
                   }`}
                 >
-                  {link.name}
+                  {item.name}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Right Utilities */}
-          <div className="flex items-center space-x-4 text-neutral-600">
+          {/* Right: Search, RSS & Admin */}
+          <div className="flex items-center space-x-4 text-[#475569]">
             {token ? (
-              <div className="flex items-center space-x-3 text-xs">
+              <div className="flex items-center space-x-2 text-xs font-sans">
                 <Link
                   href="/admin"
-                  className="flex items-center space-x-1.5 font-semibold text-neutral-900 hover:text-indigo-600 transition-colors"
+                  className="flex items-center space-x-1 font-semibold text-[#162f4d] hover:underline"
                 >
                   <LayoutDashboard className="w-3.5 h-3.5" />
-                  <span>Admin Studio</span>
+                  <span>Admin</span>
                 </Link>
                 <button
                   onClick={handleLogout}
                   title="Logout"
-                  className="hover:text-rose-600 transition-colors p-1"
+                  className="hover:text-rose-600 transition p-1"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                 </button>
@@ -95,28 +127,32 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="text-xs font-semibold text-neutral-700 hover:text-black flex items-center space-x-1"
+                className="text-xs font-semibold text-[#334155] hover:text-black hidden sm:flex items-center space-x-1"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In</span>
+                <span>Admin</span>
               </Link>
             )}
 
             <div className="h-4 w-px bg-neutral-200 hidden sm:block"></div>
 
-            <Link href="/archive" title="Search Articles" className="hover:text-black transition-colors p-1">
+            <Link href="/archive" title="Search the Chronicle" className="hover:text-black transition p-1">
               <Search className="w-4 h-4" />
             </Link>
+
             <a
               href="#"
-              onClick={(e) => { e.preventDefault(); alert("RSS Feed subscribed!"); }}
-              title="RSS Feed"
-              className="hover:text-black transition-colors p-1"
+              onClick={(e) => {
+                e.preventDefault();
+                alert("Subscribed to The Castle Chronicle RSS Feed!");
+              }}
+              title="Subscribe via RSS"
+              className="hover:text-black transition p-1"
             >
               <Rss className="w-4 h-4" />
             </a>
 
-            {/* Mobile Menu Toggle */}
+            {/* Mobile menu trigger */}
             <div className="md:hidden flex items-center">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -131,26 +167,24 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-neutral-200 px-4 py-4 space-y-3">
-          {navLinks.map((link) => (
+        <div className="md:hidden bg-white border-b border-neutral-200 px-4 py-3 space-y-2 text-sm font-serif">
+          {navItems.map((item) => (
             <Link
-              key={link.name}
-              href={link.href}
+              key={item.name}
+              href={item.href}
               onClick={() => setMobileMenuOpen(false)}
-              className="block text-sm font-medium text-neutral-800 hover:text-black py-1"
+              className="block py-1 text-neutral-800 hover:text-black"
             >
-              {link.name}
+              {item.name}
             </Link>
           ))}
-          {token && (
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block text-sm font-semibold text-indigo-700 py-1"
-            >
-              Admin Dashboard
-            </Link>
-          )}
+          <Link
+            href="/admin"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-1 text-xs font-sans font-semibold text-[#162f4d]"
+          >
+            Admin Studio
+          </Link>
         </div>
       )}
     </header>

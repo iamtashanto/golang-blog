@@ -2,12 +2,18 @@
 
 @layer base {
   body {
-    background-color: #fdfdfc;
-    color: #1a1a1a;
+    background-color: #e9eef3;
+    color: #1e293b;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 
-  h1, h2, h3, h4, .font-serif-heading {
+  .font-serif-title {
     font-family: "Georgia", "Cambria", "Times New Roman", Times, serif;
+    color: #162f4d;
+  }
+
+  .font-serif-body {
+    font-family: "Georgia", "Cambria", "Times New Roman", Times, serif;
+    color: #334155;
   }
 }
