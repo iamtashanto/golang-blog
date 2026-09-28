@@ -41,20 +41,46 @@ func ConnectDatabase() {
 }
 
 func SeedDatabase() {
-	var userCount int64
-	DB.Model(&models.User{}).Count(&userCount)
-	if userCount == 0 {
+	// 1. Seed or ensure admin accounts exist
+	adminEmails := []string{"admin@gmail.com", "admin@castlechronicle.org"}
+	for _, email := range adminEmails {
+		var user models.User
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
-		adminUser := models.User{
-			Name:     "James Castle",
-			Email:    "admin@gmail.com",
-			Password: string(hashedPassword),
-			Role:     "admin",
+		if err := DB.Where("email = ?", email).First(&user).Error; err != nil {
+			adminUser := models.User{
+				Name:     "James Castle",
+				Email:    email,
+				Password: string(hashedPassword),
+				Role:     "admin",
+			}
+			DB.Create(&adminUser)
+			log.Printf("Admin user created: %s (password: admin123)\n", email)
+		} else {
+			user.Password = string(hashedPassword)
+			user.Role = "admin"
+			user.Name = "James Castle"
+			DB.Save(&user)
+			log.Printf("Admin user verified/updated: %s (password: admin123, role: admin)\n", email)
 		}
-		DB.Create(&adminUser)
-		log.Println("Default admin user created: admin@gmail.com (password: admin123)")
 	}
 
+	// 2. Seed Default Site Settings
+	var settingCount int64
+	DB.Model(&models.SiteSetting{}).Count(&settingCount)
+	if settingCount == 0 {
+		defaultSettings := models.SiteSetting{
+			SiteTitle:   "The Castle Chronicle",
+			Tagline:     "REFLECTIONS ON FAMILY, FAITH, CULTURE & HISTORY",
+			AuthorName:  "James Castle",
+			AuthorTitle: "Essayist, Father & Historian",
+			AuthorBio:   "Chronicling ordinary days, historic curiosities, and the enduring truths that anchor our households in an accelerating world.",
+			AuthorImage: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=200&auto=format&fit=crop&q=80",
+		}
+		DB.Create(&defaultSettings)
+		log.Println("Default publication settings initialized.")
+	}
+
+	// 3. Seed Reference Chronicle Articles
 	var postCount int64
 	DB.Model(&models.Post{}).Count(&postCount)
 	if postCount == 0 {
